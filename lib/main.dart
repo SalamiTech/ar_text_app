@@ -30,6 +30,7 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   late ARKitController arkitController;
+  ARKitSphere? sphere;
 
   @override
   void dispose() {
@@ -45,28 +46,44 @@ class _MyHomePageState extends State<MyHomePage> {
       body: Container(
         child: ARKitSceneView(
           onARKitViewCreated: onARKitViewCreated,
+          enableTapRecognizer: true,
         ),
       ));
 
   void onARKitViewCreated(ARKitController arkitController) {
     this.arkitController = arkitController;
-    this.arkitController.add(_createText());
+    this.arkitController.add(_placeObject());
+    this.arkitController.onNodeTap = (nodes) => onNodeTapHandler(nodes);
   }
 
-  ARKitNode _createText() {
-    final text = ARKitText(
-      text: 'AR Testing Feature',
-      extrusionDepth: 1,
-      materials: [
-        ARKitMaterial(
-          diffuse: ARKitMaterialProperty.color(Colors.white),
-        )
-      ],
+  ARKitNode _placeObject() {
+    final material =
+        ARKitMaterial(diffuse: ARKitMaterialProperty.color(Colors.yellow));
+    sphere = ARKitSphere(
+      materials: [material],
+      radius: 0.1,
     );
+
     return ARKitNode(
-      geometry: text,
-      position: vector.Vector3(-0.3, 0.3, -1.4),
-      scale: vector.Vector3(0.02, 0.02, 0.02),
+      name: 'sphere',
+      geometry: sphere,
+      position: vector.Vector3(0, 0, -0.5),
     );
+  }
+
+  void onNodeTapHandler(List<String> nodesList) {
+    final name = nodesList.first;
+    final color =
+        (sphere!.materials.value!.first.diffuse as ARKitMaterialColor).color ==
+                Colors.yellow
+            ? Colors.blue
+            : Colors.yellow;
+    sphere!.materials.value = [
+      ARKitMaterial(diffuse: ARKitMaterialProperty.color(color))
+    ];
+    showDialog<void>(
+        context: context,
+        builder: (BuildContext context) =>
+            AlertDialog(content: Text('You tapped on $name')));
   }
 }
